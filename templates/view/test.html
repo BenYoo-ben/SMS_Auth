@@ -1,0 +1,48 @@
+<h1> - Sample Menu Page - </h1>
+
+<form>
+	Course A : 5,000 KRW -
+	<input type="number" id="a_count"> </input>
+</form>
+
+<form>
+	Course B : 8,000 KRW -
+	<input type="number" id="b_count"> </input>
+</form>
+
+<form>
+	Course A : 10,000 KRW -
+	<input type="number" id="c_count"> </input>
+</form>
+
+<form>
+	<button name="foo" id="submit_button"> Submit Query </button>
+</form>
+
+
+<script type="text/javascript">
+	const button = document.getElementById("submit_button");
+
+
+
+
+
+	button.addEventListener('click', function () {
+	var a = document.getElementById("a_count");
+	var b = document.getElementById("b_count");
+	var c = document.getElementById("c_count");
+
+		try {
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", "http://127.0.0.1:8080/view2/test", true);
+
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			xhr.send(JSON.stringify({item1: a.value, item2:b.value, item3:c.value}));
+			alert("response submitted ! ");
+		} catch {
+			alert("xxxxxxxxxxxxxxxxxxxx ");
+		}
+
+	});
+
+</script>
