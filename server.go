@@ -12,6 +12,9 @@ import (
 type Page struct {
 	Title string
 	Body []byte
+	Item1 string
+	Item2 string
+	Item3 string
 }
 
 type Temp struct{
@@ -34,16 +37,22 @@ func loadPage(title string) (*Page, error){
 	return &Page{Title: title, Body: body}, err
 }
 
+var global_temp  = Temp{}
+
 func view2Handler(w http.ResponseWriter, r *http.Request){
-	
+
 	switch r.Method {
-	case "GET":		
+	case "GET":
 		title := "view2/"+r.URL.Path[len("/view2/"):]
 		p, err := loadPage("view2/"+title)
 		fmt.Printf("called\n")
 		if err != nil {
 			p = &Page{Title: title}
 		}
+		p.Item1 = global_temp.Item1
+		p.Item2 = global_temp.Item2
+		p.Item3 = global_temp.Item3
+		fmt.Printf("%s - %s - %s\n", p.Item1, p.Item2, p.Item3)
 		renderTemplate(w, title,p)
 
 	case "POST":
@@ -58,14 +67,16 @@ func view2Handler(w http.ResponseWriter, r *http.Request){
 			fmt.Printf("json unmarshal err\n")
 		}
 		fmt.Printf("%s - %s - %s\n", data.Item1, data.Item2, data.Item3)
-			
+		global_temp = data
+		fmt.Printf("%s - %s - %s\n", global_temp.Item1, global_temp.Item2, global_temp.Item3)
+
 	default:
 		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
 	}
-	
-	
-	
-	
+
+
+
+
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request){
@@ -89,5 +100,5 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 func main() {
     http.HandleFunc("/view/", viewHandler)
     http.HandleFunc("/view2/", view2Handler)
-    log.Fatal(http.ListenAndServe(":8080", nil))
+    log.Fatal(http.ListenAndServe(":55551", nil))
 }
