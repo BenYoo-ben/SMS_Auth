@@ -7,6 +7,9 @@ import (
 	"html/template"
 	"io/ioutil"
 	"encoding/json"
+	"bufio"
+	"os"
+	"strings"
 )
 
 type Page struct {
@@ -98,7 +101,24 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 
 
 func main() {
-    http.HandleFunc("/view/", viewHandler)
+  /*  http.HandleFunc("/view/", viewHandler)
     http.HandleFunc("/view2/", view2Handler)
-    log.Fatal(http.ListenAndServe(":55551", nil))
+    log.Fatal(http.ListenAndServe(":55551", nil))*/
+
+    ctx, client := get_firebase_context_certified()
+
+    reader := bufio.NewReader(os.Stdin)
+    
+    while(true){
+    	fmt.Println("Value to change : ");
+    	text, _ := reader.ReadString('\n')
+    	text = strings.Replace(text, "\n", "", -1)
+
+    	ref := client.NewRef(text)
+    	fmt.Println("Change to ? : ")
+
+    	text1, _ := reader.ReadString('\n')
+    	text1 = strings.Replace(text, "\n", "", -1)
+    	ref.Update(ctx,text)
+    }
 }
