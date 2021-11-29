@@ -108,17 +108,31 @@ func main() {
     ctx, client := get_firebase_context_certified()
 
     reader := bufio.NewReader(os.Stdin)
-    
-    while(true){
+
+    for{
     	fmt.Println("Value to change : ");
     	text, _ := reader.ReadString('\n')
-    	text = strings.Replace(text, "\n", "", -1)
+    	text = strings.Replace(text, "\r\n", "", -1)
 
     	ref := client.NewRef(text)
-    	fmt.Println("Change to ? : ")
+    	var data map[string]interface{}
+		if err := ref.Get(ctx, &data); err != nil {
+			log.Fatalln("Error reading from database:", err)
+		}
+		fmt.Println(data)
 
+    	fmt.Println("Field Name? : ")
     	text1, _ := reader.ReadString('\n')
-    	text1 = strings.Replace(text, "\n", "", -1)
-    	ref.Update(ctx,text)
+    	text1 = strings.Replace(text, "\r\n", "", -1)
+
+    	fmt.Println("Change to? : ")
+    	text2, _ := reader.ReadString('\n')
+    	text2 = strings.Replace(text, "\r\n", "", -1)
+
+    	fmt.Println("text1: "+text1 +"\ntext2: "+text2)
+    	update_data := map[string]interface{}{
+		text1:text2,
+		}
+    	ref.Update(ctx,update_data)
     }
 }
