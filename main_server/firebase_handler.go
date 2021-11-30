@@ -13,6 +13,25 @@ import (
 var firebase_URL = "https://qrsystem-1b711-default-rtdb.asia-southeast1.firebasedatabase.app"
 var firebase_auth_path string = "./firebase_certs/qrsystem-1b711-firebase-adminsdk-z1k9l-087869e273.json"
 
+func FirebaseUpdateEntry(ctx context.Context, client *db.Client, storename string, table string, seq string, 
+	phone string, datatype string, data map[string]interface{} ){
+
+		ref := client.NewRef("Order/"+storename+"/"+table+"/"+seq+"/"+phone+"/"+datatype)
+		ref.Update(ctx,data)
+}
+
+func FirebaseUpdateSingleField(ctx context.Context, client *db.Client, storename string, table string, seq string, 
+	phone string, datatype string, value_to_modify string, newdata string){
+
+		ref := client.NewRef("Order/"+storename+"/"+table+"/"+seq+"/"+phone+"/"+datatype)
+		
+		new_map := map[string]interface{}{
+			value_to_modify:newdata,
+		}
+
+		ref.Update(ctx,new_map)
+	}
+
 func get_firebase_context_certified()(context.Context, *db.Client){
 
 	ctx := context.Background()

@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"os"
 	"strings"
+	"time"
 )
 
 type Page struct {
@@ -24,6 +25,10 @@ type Temp struct{
 	Item1 string `json:"item1"`
 	Item2 string `json:"item2"`
 	Item3 string `json:"item3"`
+}
+
+type Data struct{
+
 }
 
 func (p *Page) save() error {
@@ -100,6 +105,12 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 
 
+
+func getTimestamp()(timevalue string){
+	current := time.Now()
+	return current.Format("2006-01-02 15:04:05")
+}
+
 func main() {
   /*  http.HandleFunc("/view/", viewHandler)
     http.HandleFunc("/view2/", view2Handler)
@@ -109,6 +120,22 @@ func main() {
 
     reader := bufio.NewReader(os.Stdin)
 
+   /* data := map[string]interface{}{
+    	"phone":"01030253385",
+    	"delivered":"0",
+    	"paid":"0",
+    	"timestamp":getTimestamp(),
+    }
+
+    data2 := map[string]interface{}{
+    	"0":"1",
+    	"1":"2",
+    	"2":"0",
+    	"3":"0",
+    }*/
+   	FirebaseUpdateSingleField(ctx,client,"StoreB","Table4","1","01030253385","general","paid","3")
+  // FirebaseUpdateEntry(ctx,client,"StoreB","Table4","1","01030253385","general",data)
+   //FirebaseUpdateEntry(ctx,client,"StoreB","Table4","1","01030253385","menu",data2)
     for{
     	fmt.Println("Value to change : ");
     	text, _ := reader.ReadString('\n')
@@ -135,4 +162,5 @@ func main() {
 		}
     	ref.Update(ctx,update_data)
     }
+    
 }
