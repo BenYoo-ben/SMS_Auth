@@ -20,6 +20,11 @@ std::vector<std::string> http_handler::get_store_and_number(char * data){
 
 	std::vector<std::string> store_n_number;
 
+
+	if(std::string(data).find("favicon") == std::string::npos)
+		return store_n_number;
+
+	
 	int i = 0;
 	while(data[i] != '/'){
 		i++;
