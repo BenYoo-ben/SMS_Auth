@@ -54,10 +54,6 @@ void server_object::server_socket_start(){
 
 	socklen_t client_addr_size = sizeof(struct sockaddr_in);
 
-	int phone_sock;
-	struct sockaddr_in phone_addr;
-	phone_sock = accept(s_sock, (struct sockaddr *) &phone_addr, &client_addr_size);
-
 	while(true){
 
 		struct sockaddr_in client_addr;
@@ -72,7 +68,7 @@ void server_object::server_socket_start(){
 			exit(1);
 		}else{
 			std::cout << "Client Accepted" << std::endl;
-			session_object session(client_socket, phone_sock);
+			session_object session(client_socket);
 		}
 
 		

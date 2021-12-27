@@ -19,6 +19,7 @@ bool http_handler::check_if_valid(char *data){
 	int i =0;
 	bool eq = false;
 	bool qu = false;
+
 	while(data[i]!='\n'){
 		if(data[i]=='=')
 			eq=true;
@@ -34,6 +35,22 @@ bool http_handler::check_if_valid(char *data){
 	}
 	return false;
 
+}
+
+bool http_handler::check_if_phone(char *data){
+	bool at = false;
+	bool sh = false;
+
+	if(data[0]=='@')
+		at = true;
+
+	if(data[1]=='#')
+		sh = true;
+
+	if(at && sh)
+		return true;
+	else
+		return false;
 }
 std::vector<std::string> http_handler::get_store_and_number(char * data){
 

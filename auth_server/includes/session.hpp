@@ -12,11 +12,10 @@ private:
 	//client socket
 	int c_sock;
 
-	int p_sock;
 
 	pthread_t session_thread;
 public:
-	session_object(int established_socket,int phone_sock);
+	session_object(int established_socket);
 
 	void close_socket();
 	void *run();
