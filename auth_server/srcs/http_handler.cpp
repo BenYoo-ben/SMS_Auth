@@ -15,14 +15,29 @@ std::string http_handler::get_html(std::string location){
 	close(fd);
 	return html_page;
 }
+bool http_handler::check_if_valid(char *data){
+	int i =0;
+	bool eq = false;
+	bool qu = false;
+	while(data[i]!='\n'){
+		if(data[i]=='=')
+			eq=true;
+		if(data[i]=='?')
+			qu=true;
 
+		if(eq && qu)
+			return true;
+		else
+			i++;
+
+		printf("%d",i);
+	}
+	return false;
+
+}
 std::vector<std::string> http_handler::get_store_and_number(char * data){
 
 	std::vector<std::string> store_n_number;
-
-
-	if(std::string(data).find("favicon") == std::string::npos)
-		return store_n_number;
 
 	
 	int i = 0;
@@ -40,14 +55,18 @@ std::vector<std::string> http_handler::get_store_and_number(char * data){
 
 		i++;
 		buf_i++;
+		if(i>256)
+			return store_n_number;
 	}
 	buffer[buf_i] = '\0';
-
+	printf("ITEM 1\n");
 	store_n_number.push_back(std::string(buffer));
 	buf_i = 0;
 
 	while(data[i]!='='){
 		i++;
+		if(i>256)
+			return store_n_number;
 	}
 	i++;
 
@@ -58,6 +77,7 @@ std::vector<std::string> http_handler::get_store_and_number(char * data){
 	}
 	buffer[buf_i] = '\0';
 
+	printf("ITEM 2\n");
 	store_n_number.push_back(std::string(buffer));
 
 	return store_n_number;

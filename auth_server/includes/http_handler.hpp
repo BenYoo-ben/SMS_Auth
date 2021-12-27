@@ -24,6 +24,8 @@ public:
 
 	std::vector<std::string> get_store_and_number(char * data);
 
+	bool check_if_valid(char *data);
+
 };
 
 #endif

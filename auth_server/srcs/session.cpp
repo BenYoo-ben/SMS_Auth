@@ -37,19 +37,17 @@ void *session_object::run(){
 	}
 	else{
 		printf("Read complete ! : RECV=%s\n",buffer);
-		
-		memset(buffer,0x0,global_expected_MTU);	
-		sprintf(buffer, "%s", hh.get_html(std::string("assets/auth_main.html")).c_str());
-		write(c_sock, buffer,global_expected_MTU);
+		if(!hh.check_if_valid(buffer)){
+			printf("invalid.\n");
+			memset(buffer,0x0,global_expected_MTU);	
+			sprintf(buffer, "%s", hh.get_html(std::string("assets/auth_main.html")).c_str());
+			write(c_sock, buffer,global_expected_MTU);
+		}
+		else{
+			printf("valid.\n");
 
-		bytes_read = read(c_sock, buffer, global_expected_MTU);
-		while(bytes_read >= 1){
-			printf("Data Read ! \n");
-			printf("Read complete ! : RECV=%s\n",buffer);
-			memset(buffer,0x0,global_expected_MTU);
 			std::vector<std::string> store_n_number = hh.get_store_and_number(buffer);
-			if(store_n_number.empty())
-				continue;
+			
 			std::string store = store_n_number.at(0);
 			std::string number = store_n_number.at(1);
 
@@ -59,10 +57,11 @@ void *session_object::run(){
 			memset(buffer,0x0,global_expected_MTU);
 			sprintf(buffer,"%s",number.c_str());
 			sprintf(buffer+number.length(),"%d",sms_data);
+
+			printf("Send... <%s>\n",buffer);
 			write(p_sock, buffer,18);
 
 			close_socket();
-			break;
 		}
 
 	}
