@@ -5,6 +5,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define HTTP_DATA_TYPE_TABLE	0
+#define HTTP_DATA_TYPE_PHONE	1
+#define HTTP_DATA_TYPE_AUTH		2
+
 class http_handler{
 
 private:
@@ -22,9 +26,9 @@ public:
 
 	std::string get_html(std::string location);
 
-	std::vector<std::string> get_store_and_number(char * data);
+	std::string get_data(char * data, int data_type);
 
-	bool check_if_valid(char *data);
+	int check_type(char *data);
 	bool check_if_phone(char *data);
 };
 

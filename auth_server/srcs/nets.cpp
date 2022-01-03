@@ -2,6 +2,7 @@
 #include "nets.hpp"
 #include "global.hpp"
 #include "session.hpp"
+#include "random_generator.hpp"
 
 int server_object::server_socket_init(){
 	
@@ -54,6 +55,10 @@ void server_object::server_socket_start(){
 
 	socklen_t client_addr_size = sizeof(struct sockaddr_in);
 
+	global_phone_sockets = std::vector<int>();
+	global_phone_index = 0;
+	global_auth_codes = std::map<std::string, int>();
+
 	while(true){
 
 		struct sockaddr_in client_addr;
@@ -76,4 +81,3 @@ void server_object::server_socket_start(){
 	}
 
 }
-

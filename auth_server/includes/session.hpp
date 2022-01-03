@@ -18,6 +18,7 @@ public:
 	session_object(int established_socket);
 
 	void close_socket();
+	int exchange_auth_with_phone(std::string phone_number, int random_data);
 	void *run();
 
 };

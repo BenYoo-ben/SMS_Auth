@@ -15,88 +15,97 @@ std::string http_handler::get_html(std::string location){
 	close(fd);
 	return html_page;
 }
-bool http_handler::check_if_valid(char *data){
-	int i =0;
-	bool eq = false;
-	bool qu = false;
+int http_handler::check_type(char *data){
+	printf("??\n");
+	std::string data_str(data);
 
-	while(data[i]!='\n'){
-		if(data[i]=='=')
-			eq=true;
-		if(data[i]=='?')
-			qu=true;
-
-		if(eq && qu)
-			return true;
-		else
-			i++;
-
-		printf("%d",i);
+	//AUTH
+	if(data_str.find("auth_code")!= std::string::npos){
+		return HTTP_DATA_TYPE_AUTH;
+	}else if(data_str.find("phone_number") != std::string::npos){
+		return HTTP_DATA_TYPE_PHONE;
 	}
-	return false;
+	else
+		return HTTP_DATA_TYPE_TABLE;
 
 }
 
 bool http_handler::check_if_phone(char *data){
 	bool at = false;
-	bool sh = false;
 
-	if(data[0]=='@')
+	if(data[0]==0x17)
 		at = true;
 
-	if(data[1]=='#')
-		sh = true;
-
-	if(at && sh)
-		return true;
-	else
-		return false;
+	return false;
 }
-std::vector<std::string> http_handler::get_store_and_number(char * data){
 
-	std::vector<std::string> store_n_number;
-
+/* FORM :
+	URL = 127.0.0.1:55551/[#table]?phone_number=[phone_number];
+*/
+std::string http_handler::get_data(char *data, int type){
+	printf("!!\n");
 	
 	int i = 0;
-	while(data[i] != '/'){
-		i++;
-	}
-	i++;
-
 	char buffer[256];
 	int buf_i = 0;
 
-	while(data[i]!='?'){
-
-		buffer[buf_i] = data[i];
-
+	if(type == HTTP_DATA_TYPE_TABLE){
+		
+		while(data[i] != '/'){
+			i++;
+		}
 		i++;
-		buf_i++;
-		if(i>256)
-			return store_n_number;
+		
+		while(data[i] != '\n' || data[i]!='\r' || data[i]!='?'){
+			buffer[buf_i] = data[i];
+			i++;
+			buf_i++;
+		}
+		buffer[buf_i] = '\0';
+		return std::string(buffer);
 	}
-	buffer[buf_i] = '\0';
-	printf("ITEM 1\n");
-	store_n_number.push_back(std::string(buffer));
-	buf_i = 0;
+	else if(type == HTTP_DATA_TYPE_PHONE){
+		std::string tmp_str = std::string(data);
+		int start_pos = tmp_str.find("phone_number=");
+		std::string sub_string = tmp_str.substr(start_pos+13,  12);
+		std::cout << sub_string << std::endl;
 
-	while(data[i]!='='){
-		i++;
-		if(i>256)
-			return store_n_number;
+		return sub_string;
+
+	}else if(type == HTTP_DATA_TYPE_AUTH){
+		while(true){
+			while(data[i]!='?'){
+				i++;
+			}
+			i++;
+
+			while(data[i]!='='){
+				buffer[buf_i] = data[i];
+				buf_i ++; i++;
+			}
+			buffer[buf_i] = '\0';
+			i++;
+			if(std::string(buffer) == "auth_code"){
+
+				buf_i = 0;
+				while(data[i]!='\n' || data[i]!= '\r' || data[i]!='?'){
+
+					buffer[buf_i] = data[i];
+					i++;
+					buf_i++;
+					
+				}
+				buffer[buf_i] = '\0';
+				return std::string(buffer);
+
+
+			}else{
+				continue;
+			}
+		}
 	}
-	i++;
 
-	while(data[i]!=' '){
-		buffer[buf_i] = data[i];
-		i++;
-		buf_i++;
-	}
-	buffer[buf_i] = '\0';
 
-	printf("ITEM 2\n");
-	store_n_number.push_back(std::string(buffer));
 
-	return store_n_number;
 }
 
