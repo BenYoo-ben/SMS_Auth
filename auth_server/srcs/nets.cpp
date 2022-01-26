@@ -73,7 +73,7 @@ void server_object::server_socket_start(){
 			exit(1);
 		}else{
 			std::cout << "Client Accepted" << std::endl;
-			session_object session(client_socket);
+			new session_object(client_socket);
 		}
 
 		

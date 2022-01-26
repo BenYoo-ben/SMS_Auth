@@ -16,7 +16,6 @@ std::string http_handler::get_html(std::string location){
 	return html_page;
 }
 int http_handler::check_type(char *data){
-	printf("??\n");
 	std::string data_str(data);
 
 	//AUTH
@@ -30,32 +29,37 @@ int http_handler::check_type(char *data){
 
 }
 
+/* Establishment Process:
+ * Phone -> Server : 0x11
+ * Server-> Phone  : 0x06
+ *
+ */
 bool http_handler::check_if_phone(char *data){
 	bool at = false;
 
-	if(data[0]==0x17)
+	if(data[0]==0x11)
 		at = true;
 
-	return false;
+	return at;
 }
 
 /* FORM :
-	URL = 127.0.0.1:55551/[#table]?phone_number=[phone_number];
-*/
+ *	URL = 127.0.0.1:55551/[#table]?phone_number=[phone_number];
+ */
 std::string http_handler::get_data(char *data, int type){
 	printf("!!\n");
-	
+
 	int i = 0;
 	char buffer[256];
 	int buf_i = 0;
 
 	if(type == HTTP_DATA_TYPE_TABLE){
-		
+
 		while(data[i] != '/'){
 			i++;
 		}
 		i++;
-		
+
 		while(data[i] != '\n' || data[i]!='\r' || data[i]!='?'){
 			buffer[buf_i] = data[i];
 			i++;
@@ -93,7 +97,7 @@ std::string http_handler::get_data(char *data, int type){
 					buffer[buf_i] = data[i];
 					i++;
 					buf_i++;
-					
+
 				}
 				buffer[buf_i] = '\0';
 				return std::string(buffer);
@@ -103,6 +107,8 @@ std::string http_handler::get_data(char *data, int type){
 				continue;
 			}
 		}
+
+		return std::string();
 	}
 
 
