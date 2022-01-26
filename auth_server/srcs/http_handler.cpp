@@ -60,7 +60,7 @@ std::string http_handler::get_data(char *data, int type){
 		}
 		i++;
 
-		while(data[i] != '\n' || data[i]!='\r' || data[i]!='?'){
+		while(data[i]!='?'){
 			buffer[buf_i] = data[i];
 			i++;
 			buf_i++;
@@ -77,41 +77,15 @@ std::string http_handler::get_data(char *data, int type){
 		return sub_string;
 
 	}else if(type == HTTP_DATA_TYPE_AUTH){
-		while(true){
-			while(data[i]!='?'){
-				i++;
-			}
-			i++;
 
-			while(data[i]!='='){
-				buffer[buf_i] = data[i];
-				buf_i ++; i++;
-			}
-			buffer[buf_i] = '\0';
-			i++;
-			if(std::string(buffer) == "auth_code"){
+		std::string tmp_str = std::string(data);
+		int start_pos = tmp_str.find("auth_code=");
+		std::string sub_string = tmp_str.substr(start_pos+11, 7);
+		std::cout << sub_string << std::endl;
 
-				buf_i = 0;
-				while(data[i]!='\n' || data[i]!= '\r' || data[i]!='?'){
-
-					buffer[buf_i] = data[i];
-					i++;
-					buf_i++;
-
-				}
-				buffer[buf_i] = '\0';
-				return std::string(buffer);
-
-
-			}else{
-				continue;
-			}
-		}
-
-		return std::string();
+		return sub_string;
+	
 	}
-
-
-
+	return NULL;
 }
 

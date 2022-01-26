@@ -16,7 +16,9 @@ session_object::session_object(int established_socket){
 int session_object::exchange_auth_with_phone(std::string phone_number, int random_data){
 
 	if(global_phone_sockets.empty()){
+		printf("No Phone Socket is available! \n");
 		return -1;
+
 	}
 	else{
 		if(global_phone_index > global_phone_sockets.size()){
@@ -24,6 +26,7 @@ int session_object::exchange_auth_with_phone(std::string phone_number, int rando
 		}
 
 		int use_socket = global_phone_sockets.at(global_phone_index);
+
 
 		char buffer[18];
 
@@ -35,6 +38,7 @@ int session_object::exchange_auth_with_phone(std::string phone_number, int rando
 		if(_size != 1){
 			global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
 			global_phone_index = 0;
+			printf("Write ERR !\n");
 			return -2;
 		}
 
@@ -44,24 +48,27 @@ int session_object::exchange_auth_with_phone(std::string phone_number, int rando
 		if(_size != 1 || buffer[0]!= 0x06){
 			global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
 			global_phone_index = 0;
+			printf("Read ERR !\n");
 			return -2;
 		}
 
 		memset(buffer,0x0,18);
 		sprintf(buffer,"%s",phone_number.c_str());
-		sprintf(buffer+phone_number.length(),"%d",random_data);
+		sprintf(buffer+phone_number.length()-1,"%d",random_data);
 
 		printf("Send... <%s>\n",buffer);
 
 		_size = write(use_socket, buffer, 18);
 
-		if(_size != 7){
+		if(_size != 18){
+			printf("Write 2 ERR !\n");
 			return -1;
 		}
 
 		_size = read(use_socket, buffer, 1);
 
 		if(_size != 1 || buffer[0] != 0x06){
+			printf("Read 2 ERR !\n");
 			return -1;
 		}
 
@@ -139,14 +146,28 @@ void *session_object::run(){
 			memset(buffer, 0x0, global_expected_MTU);
 			std::string phase_2_data = hh.get_html(std::string("assets/auth_phase_2.html"));
 			phase_2_data.replace(phase_2_data.find("####"), 4, phone_number);
+			phase_2_data.replace(phase_2_data.find("####"), 4, phone_number);
 			sprintf(buffer, "%s", phase_2_data.c_str());
 			write(c_sock, buffer, global_expected_MTU);
 
-
 		}else if(data_type == HTTP_DATA_TYPE_AUTH){
-			std::string auth_from_user_string = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
-			/* resume here, get phone number, and if correct ? redirect to Wix */
 
+			std::string auth = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
+			/* auth check needed */
+
+			printf("PH1\n");
+			std::string table = hh.get_data(buffer, HTTP_DATA_TYPE_TABLE);
+			std::string phone = hh.get_data(buffer, HTTP_DATA_TYPE_PHONE);
+			printf("PH2\n");
+			std::string redirect = hh.get_html(std::string("assets/redirect.html"));
+			
+			printf("TABLE = %s\nPHONE = %s\n\n",table.c_str(), phone.c_str());
+			
+			redirect.replace(redirect.find("!!!"),3,table);
+			redirect.replace(redirect.find("@@@"),3,phone);
+			memset(buffer, 0x0, global_expected_MTU);
+			sprintf(buffer, "%s", redirect.c_str());
+			write(c_sock, buffer, global_expected_MTU);	
 		}
 
 	}
