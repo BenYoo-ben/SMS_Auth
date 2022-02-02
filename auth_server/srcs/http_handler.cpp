@@ -80,7 +80,7 @@ std::string http_handler::get_data(char *data, int type){
 
 		std::string tmp_str = std::string(data);
 		int start_pos = tmp_str.find("auth_code=");
-		std::string sub_string = tmp_str.substr(start_pos+11, 7);
+		std::string sub_string = tmp_str.substr(start_pos+10, 6);
 		std::cout << sub_string << std::endl;
 
 		return sub_string;

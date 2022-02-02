@@ -65,7 +65,6 @@ void server_object::server_socket_start(){
 
 		std::cout << "waiting..." << std::endl;
 
-
 		int client_socket = accept(s_sock, (struct sockaddr*) &client_addr, &client_addr_size );
 
 		if(client_socket < 0){
@@ -75,8 +74,6 @@ void server_object::server_socket_start(){
 			std::cout << "Client Accepted" << std::endl;
 			new session_object(client_socket);
 		}
-
-		
 
 	}
 

@@ -12,7 +12,10 @@ session_object::session_object(int established_socket){
 	c_sock = established_socket;
 	pthread_create(&session_thread, NULL, pthread_member_wrapper<session_object, &session_object::run>, this);
 }
-
+/*
+ * 0x05 = check if phone is alive(no response = dead)	 
+ * meaning Enquiry
+ */
 int session_object::exchange_auth_with_phone(std::string phone_number, int random_data){
 
 	if(global_phone_sockets.empty()){
@@ -30,10 +33,31 @@ int session_object::exchange_auth_with_phone(std::string phone_number, int rando
 
 		char buffer[18];
 
+		// 0x05 = enquiry, checking if phone is alive
+		buffer[0] = 0x05;
+		
+		int _size = write(use_socket, buffer, 1);
+
+		if( _size != 1){
+			global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
+			global_phone_index = 0;
+			printf("Write ERR !\n");
+			return -2;
+		}
+
+		// 0x06 = acknowledgement(ascii)
+		_size = read(use_socket, buffer, 1);
+
+		if(_size != 1 || buffer[0]!=0x06){
+			global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
+			global_phone_index = 0;
+			printf("Read ERR ! \n");
+			return -2;
+		}
+
 		// 0x01 = start of header(ascii)
 		buffer[0] = 0x01;
-
-		int _size = write(use_socket, buffer, 1);
+		_size = write(use_socket, buffer, 1);
 
 		if(_size != 1){
 			global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
@@ -140,7 +164,6 @@ void *session_object::run(){
 			
 			}
 
-			global_auth_codes.insert({phone_number, sms_auth_code});
 
 			//replace SHARPS('#') with phone number
 			memset(buffer, 0x0, global_expected_MTU);
@@ -149,16 +172,38 @@ void *session_object::run(){
 			phase_2_data.replace(phase_2_data.find("####"), 4, phone_number);
 			sprintf(buffer, "%s", phase_2_data.c_str());
 			write(c_sock, buffer, global_expected_MTU);
-
+			//insert into MAP
+			global_auth_codes.insert({phone_number, sms_auth_code});
+			
 		}else if(data_type == HTTP_DATA_TYPE_AUTH){
 
-			std::string auth = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
-			/* auth check needed */
+			std::string auth_str = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
+			int auth = stoi(auth_str);
+			printf("AUTH = %s\n", auth_str.c_str());
 
-			printf("PH1\n");
 			std::string table = hh.get_data(buffer, HTTP_DATA_TYPE_TABLE);
 			std::string phone = hh.get_data(buffer, HTTP_DATA_TYPE_PHONE);
-			printf("PH2\n");
+		
+			//printf("Auth Code for [%s = %d]\n",phone.c_str(), global_auth_codes.at(phone));
+				
+			if(global_auth_codes.find(phone)==global_auth_codes.end() 
+			|| global_auth_codes.at(phone) != auth)
+			{
+				//code not found
+				printf("Input Code: [%s] does not exist in man\n",auth_str.c_str());
+				std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
+				memset(buffer, 0x0, global_expected_MTU);
+				sprintf(buffer, "%s", no_auth.c_str());
+				write(c_sock, buffer, global_expected_MTU);
+			
+				printf("Erase code associated with phone number \n");	
+				if(global_auth_codes.find(phone)!=global_auth_codes.end())
+					global_auth_codes.erase(global_auth_codes.find(phone));
+
+				return NULL;
+			}
+			
+		
 			std::string redirect = hh.get_html(std::string("assets/redirect.html"));
 			
 			printf("TABLE = %s\nPHONE = %s\n\n",table.c_str(), phone.c_str());
@@ -167,7 +212,9 @@ void *session_object::run(){
 			redirect.replace(redirect.find("@@@"),3,phone);
 			memset(buffer, 0x0, global_expected_MTU);
 			sprintf(buffer, "%s", redirect.c_str());
-			write(c_sock, buffer, global_expected_MTU);	
+			write(c_sock, buffer, global_expected_MTU);
+			printf("Erase codes associated with phone number \n");
+			global_auth_codes.erase(global_auth_codes.find(phone));
 		}
 
 	}
