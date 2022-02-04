@@ -47,20 +47,20 @@ bool http_handler::check_if_phone(char *data){
  *	URL = 127.0.0.1:55551/[#table]?phone_number=[phone_number];
  */
 std::string http_handler::get_data(char *data, int type){
-	printf("!!\n");
 
+	printf("Get data of type [%d]\n",type);
 	int i = 0;
 	char buffer[256];
 	int buf_i = 0;
 
 	if(type == HTTP_DATA_TYPE_TABLE){
-
-		while(data[i] != '/'){
+		//LOGIC MUST BE FIXED HERE(segfault)
+		while(data[i] != '/' && i < 256){
 			i++;
 		}
 		i++;
 
-		while(data[i]!='?'){
+		while(data[i]!='?' && i < 256){
 			buffer[buf_i] = data[i];
 			i++;
 			buf_i++;
@@ -70,22 +70,34 @@ std::string http_handler::get_data(char *data, int type){
 	}
 	else if(type == HTTP_DATA_TYPE_PHONE){
 		std::string tmp_str = std::string(data);
-		int start_pos = tmp_str.find("phone_number=");
-		std::string sub_string = tmp_str.substr(start_pos+13,  12);
-		std::cout << sub_string << std::endl;
+		unsigned int start_pos = tmp_str.find("phone_number=");
+		if(start_pos!=std::string::npos)
+		{
+			std::string sub_string = tmp_str.substr(start_pos+13,  12);
+			std::cout << sub_string << std::endl;
 
-		return sub_string;
+			return sub_string;	
+		}
+		else
+			return "";
 
 	}else if(type == HTTP_DATA_TYPE_AUTH){
 
 		std::string tmp_str = std::string(data);
-		int start_pos = tmp_str.find("auth_code=");
-		std::string sub_string = tmp_str.substr(start_pos+10, 6);
-		std::cout << sub_string << std::endl;
+		unsigned int start_pos = tmp_str.find("auth_code=");
+		if(start_pos!=std::string::npos){
+			std::string sub_string = tmp_str.substr(start_pos+10, 6);
+			std::cout << sub_string << std::endl;
 
-		return sub_string;
-	
+			return sub_string;
+		}
+		else
+			return "";
 	}
-	return NULL;
+	return "";
 }
 
+void session_invalid(char *str)
+{
+	
+}

@@ -8,4 +8,5 @@ static unsigned int global_expected_MTU = 1500;
 static std::vector<int> global_phone_sockets;
 static int global_phone_index;
 static std::map<std::string, int> global_auth_codes;
+static std::map<std::string, clock_t> global_auth_timeouts;
 #endif
