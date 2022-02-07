@@ -2,10 +2,16 @@ HTTP/1.1 200 OK
 Content-Type:text/html
 Content-Length: 2250
 
-<h3>PhoneNumber</h3>
-<form method="get">
-	<input type="text" name="phone_number" id="phone_number_input"> </input>
-	<input type="submit" id="phone_number_button"> </button>
-
-</form>
-
+<meta name="viewport" content="width=device-width">
+<meta charset="utf-8">
+<link rel="stylesheet" href="css/style.css">
+<div class="login-page">
+  <div class="form">
+    <h3> SMS 인증  </h3>
+    <form methond="get">
+      <input type="text" name="phone_number" placeholder="전화번호를 숫자만 입력해주세요."/>
+      <button>인증번호 받기</button>
+      <p class="message">위 버튼을 클릭하는 것으로 본 서비스의 개인 정보 처리 방침에 동의합니다.  <a href="218.48.36.143:55551/agreements">자세한 내용 확인</a></p>
+    </form>
+  </div>
+</div>

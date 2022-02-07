@@ -4,14 +4,16 @@ std::string http_handler::get_html(std::string location){
 
 	int fd = open(location.c_str(),O_RDONLY);
 
-	char buffer[2048];
+	char buffer[18000];
 
-	int size_read = read(fd, buffer, 2048);
+
+	int size_read = read(fd, buffer, 18000);
 
 	buffer[size_read] = '\0';
 
 	std::string html_page(buffer);
-
+	
+	printf("LENGTH : %d\n",html_page.length());
 	close(fd);
 	return html_page;
 }
@@ -19,13 +21,20 @@ int http_handler::check_type(char *data){
 	std::string data_str(data);
 
 	//AUTH
-	if(data_str.find("auth_code")!= std::string::npos){
+	if(data_str.find(".css")!=std::string::npos){
+		return HTTP_DATA_TYPE_STYLE_SHEET;
+	}
+	else if(data_str.find("agreement")!=std::string::npos){
+		return HTTP_DATA_TYPE_AGREEMENT;
+	}
+	else if(data_str.find("auth_code")!= std::string::npos){
 		return HTTP_DATA_TYPE_AUTH;
 	}else if(data_str.find("phone_number") != std::string::npos){
 		return HTTP_DATA_TYPE_PHONE;
 	}
-	else
+	else{
 		return HTTP_DATA_TYPE_TABLE;
+	}
 
 }
 
@@ -57,6 +66,7 @@ std::string http_handler::get_data(char *data, int type){
 		//LOGIC MUST BE FIXED HERE(segfault)
 		while(data[i] != '/' && i < 256){
 			i++;
+			printf("i:%d\n",i);
 		}
 		i++;
 
@@ -64,6 +74,8 @@ std::string http_handler::get_data(char *data, int type){
 			buffer[buf_i] = data[i];
 			i++;
 			buf_i++;
+
+			printf("i:%d, buf_i:%d\n",i,buf_i);
 		}
 		buffer[buf_i] = '\0';
 		return std::string(buffer);
@@ -97,7 +109,34 @@ std::string http_handler::get_data(char *data, int type){
 	return "";
 }
 
+char * http_handler::encoding(char *text_input, char *source, char *target)
+{
+	iconv_t it;
+
+	int input_len = strlen(text_input) + 1;
+	int output_len = input_len * 2;
+
+
+	size_t in_size = input_len;
+	size_t out_size = output_len;
+
+	char *output = (char *)malloc(output_len);
+
+	char *output_buf = output;
+	char *input_buf = text_input;
+
+	it = iconv_open(target, source); 
+	int ret = iconv(it, &input_buf, &in_size, &output_buf, &out_size);
+
+
+	iconv_close(it);
+
+	return output;
+}
+
+
+
 void session_invalid(char *str)
 {
-	
+
 }

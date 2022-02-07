@@ -4,11 +4,13 @@
 #include "common.hpp"
 #include <unistd.h>
 #include <fcntl.h>
+#include <iconv.h>
 
 #define HTTP_DATA_TYPE_TABLE	0
 #define HTTP_DATA_TYPE_PHONE	1
-#define HTTP_DATA_TYPE_AUTH		2
-
+#define HTTP_DATA_TYPE_AUTH	2
+#define HTTP_DATA_TYPE_STYLE_SHEET	3
+#define HTTP_DATA_TYPE_AGREEMENT	4
 class http_handler{
 
 private:
@@ -30,6 +32,8 @@ public:
 
 	int check_type(char *data);
 	bool check_if_phone(char *data);
+
+	char *encoding( char *text_input, char *source, char *target);
 };
 
 #endif

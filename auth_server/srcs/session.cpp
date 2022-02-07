@@ -147,7 +147,7 @@ void *session_object::run(){
 
 			if(global_auth_codes.find(phone_number)==global_auth_codes.end())
 			{
-
+//sms twice = mutex(add to map, delete add again)
 				random_number_generator rng;
 				int sms_auth_code = rng.generate_int(6);
 
@@ -162,7 +162,7 @@ void *session_object::run(){
 					if(ret == -1)
 					{
 						printf("There are no available SMS Devices...\n");
-						std::string no_sms_dev_data = hh.get_html(std::string("assets/no_sms_dev.html"));
+						std::string no_sms_dev_data = hh.get_html(std::string("assets/auth_fail.html"));
 						memset(buffer ,0x0, global_expected_MTU);
 						sprintf(buffer, "%s", no_sms_dev_data.c_str());
 						write(c_sock, buffer, global_expected_MTU);
@@ -175,8 +175,6 @@ void *session_object::run(){
 				//replace SHARPS('#') with phone number
 				memset(buffer, 0x0, global_expected_MTU);
 				std::string phase_2_data = hh.get_html(std::string("assets/auth_phase_2.html"));
-				phase_2_data.replace(phase_2_data.find("####"), 4, phone_number);
-				phase_2_data.replace(phase_2_data.find("####"), 4, phone_number);
 				sprintf(buffer, "%s", phase_2_data.c_str());
 				write(c_sock, buffer, global_expected_MTU);
 				//insert into MAP
@@ -199,7 +197,7 @@ void *session_object::run(){
 
 			std::string table = hh.get_data(buffer, HTTP_DATA_TYPE_TABLE);
 			std::string phone = hh.get_data(buffer, HTTP_DATA_TYPE_PHONE);
-			
+
 			if(table.empty()){
 				perror("table is invalid(possibly empty)");
 				return NULL;
@@ -286,6 +284,26 @@ void *session_object::run(){
 			}
 
 
+		}
+		else if(data_type == HTTP_DATA_TYPE_STYLE_SHEET){
+			printf("Style Sheet Request\n");
+			std::string style = hh.get_html(std::string("assets/css/style.css"));
+			memset(buffer,0x0,global_expected_MTU);
+			sprintf(buffer, "%s", style.c_str());
+			write(c_sock, buffer, global_expected_MTU);
+
+			printf("Style Sent \n");
+		}
+		else if(data_type == HTTP_DATA_TYPE_AGREEMENT){
+			printf("Agreement Request\n");
+			std::string agree = hh.get_html(std::string("assets/agreement.html"));
+
+			memset(buffer,0x0,global_expected_MTU);
+
+			sprintf(buffer,"%s",agree.c_str());
+			write(c_sock, buffer, global_expected_MTU);
+
+			printf("Agreement Sent\n");
 		}
 
 	}

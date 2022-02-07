@@ -1,11 +1,18 @@
 HTTP/1.1 200 OK
 Content-Type:text/html
-Content-Length: 275
+Content-Length: 2250
 
-<h3>Auth code for ####</h3>
-<form method="get">
-	<input type="text" name="auth_code" id="auth_code_input"> </input>
-	<input type="hidden" name="phone" value="####"></input>
-	<input type="submit" id="auth_code_button"> </button>
-</form>
-
+<meta name="viewport" content="width=device-width">
+<meta charset="utf-8">
+<link rel="stylesheet" href="css/style.css">
+<div class="login-page">
+  <div class="form">
+    <h3> 인증 번호를 입력해주세요. </h3>
+    <form methond="get">
+      <input type="text" name="auth_code" placeholder="인증번호 6자리를 입력해주세요."/>
+      <input type="hidden" name="phone" value="####"> </input>
+      <button>제출 후 매뉴판 보기</button>
+      <p class="message">위 버튼을 클릭하는 것으로 본 서비스의 개인 정보 처리 방침에 동의합니다.  <a href="218.48.36.143:55551/agreements">자세한 내용 확인</a></p>
+    </form>
+  </div>
+</div>
