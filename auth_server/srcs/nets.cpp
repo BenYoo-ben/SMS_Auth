@@ -57,7 +57,8 @@ void server_object::server_socket_start(){
 
 	global_phone_sockets = std::vector<int>();
 	global_phone_index = 0;
-	global_auth_codes = std::map<std::string, int>();
+	global_auth = std::vector<struct auth_data>(); 
+	global_auth_index = std::vector<int>();
 
 	while(true){
 

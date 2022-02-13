@@ -4,16 +4,15 @@ std::string http_handler::get_html(std::string location){
 
 	int fd = open(location.c_str(),O_RDONLY);
 
-	char buffer[18000];
+	char buffer[HTTP_BUFFER_SIZE];
 
 
-	int size_read = read(fd, buffer, 18000);
+	int size_read = read(fd, buffer, HTTP_BUFFER_SIZE);
 
 	buffer[size_read] = '\0';
 
 	std::string html_page(buffer);
 	
-	printf("LENGTH : %d\n",html_page.length());
 	close(fd);
 	return html_page;
 }
@@ -66,7 +65,6 @@ std::string http_handler::get_data(char *data, int type){
 		//LOGIC MUST BE FIXED HERE(segfault)
 		while(data[i] != '/' && i < 256){
 			i++;
-			printf("i:%d\n",i);
 		}
 		i++;
 
@@ -75,7 +73,6 @@ std::string http_handler::get_data(char *data, int type){
 			i++;
 			buf_i++;
 
-			printf("i:%d, buf_i:%d\n",i,buf_i);
 		}
 		buffer[buf_i] = '\0';
 		return std::string(buffer);
@@ -86,7 +83,6 @@ std::string http_handler::get_data(char *data, int type){
 		if(start_pos!=std::string::npos)
 		{
 			std::string sub_string = tmp_str.substr(start_pos+13,  12);
-			std::cout << sub_string << std::endl;
 
 			return sub_string;	
 		}
@@ -99,7 +95,6 @@ std::string http_handler::get_data(char *data, int type){
 		unsigned int start_pos = tmp_str.find("auth_code=");
 		if(start_pos!=std::string::npos){
 			std::string sub_string = tmp_str.substr(start_pos+10, 6);
-			std::cout << sub_string << std::endl;
 
 			return sub_string;
 		}

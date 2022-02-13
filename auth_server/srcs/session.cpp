@@ -145,46 +145,46 @@ void *session_object::run(){
 				return NULL;
 			}
 
-			if(global_auth_codes.find(phone_number)==global_auth_codes.end())
-			{
 //sms twice = mutex(add to map, delete add again)
-				random_number_generator rng;
-				int sms_auth_code = rng.generate_int(6);
+			random_number_generator rng;
+			int sms_auth_code = rng.generate_int(6);
 
-				int ret;
-				if( (ret = exchange_auth_with_phone(phone_number, sms_auth_code)) < 0)
+			int ret;
+			if( (ret = exchange_auth_with_phone(phone_number, sms_auth_code)) < 0)
+			{
+				while(ret == -2)
 				{
-					while(ret == -2)
-					{
-						ret = exchange_auth_with_phone(phone_number, sms_auth_code);
-					}
-
-					if(ret == -1)
-					{
-						printf("There are no available SMS Devices...\n");
-						std::string no_sms_dev_data = hh.get_html(std::string("assets/auth_fail.html"));
-						memset(buffer ,0x0, global_expected_MTU);
-						sprintf(buffer, "%s", no_sms_dev_data.c_str());
-						write(c_sock, buffer, global_expected_MTU);
-						return NULL;
-					}	
-
+					ret = exchange_auth_with_phone(phone_number, sms_auth_code);
 				}
 
+				if(ret == -1)
+				{
+					printf("There are no available SMS Devices...\n");
+					std::string no_sms_dev_data = hh.get_html(std::string("assets/auth_fail.html"));
+					memset(buffer ,0x0, global_expected_MTU);
+					sprintf(buffer, "%s", no_sms_dev_data.c_str());
+					write(c_sock, buffer, global_expected_MTU);
+					return NULL;
+				}	
 
-				//replace SHARPS('#') with phone number
-				memset(buffer, 0x0, global_expected_MTU);
-				std::string phase_2_data = hh.get_html(std::string("assets/auth_phase_2.html"));
-				sprintf(buffer, "%s", phase_2_data.c_str());
-				write(c_sock, buffer, global_expected_MTU);
-				//insert into MAP
-				global_auth_codes.insert({phone_number, sms_auth_code});
-				global_auth_timeouts.insert({phone_number, clock()});
 			}
-			else{
-				//duplicate, just ignore this request
-				return NULL;
-			}
+
+			
+			//replace SHARPS('#') with phone number
+			memset(buffer, 0x0, global_expected_MTU);
+			std::string phase_2_data = hh.get_html(std::string("assets/auth_phase_2.html"));
+			sprintf(buffer, "%s", phase_2_data.c_str());
+			write(c_sock, buffer, global_expected_MTU);
+			
+			//insert into Vector
+			struct auth_data data;
+			data.auth_code = sms_auth_code;
+			data.time = clock();
+			data.phone_number = phone_number;
+
+			global_auth.push_back(data);
+			global_auth_index.push_back(data.auth_code);
+			
 		}else if(data_type == HTTP_DATA_TYPE_AUTH){
 
 			std::string auth_str = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
@@ -208,10 +208,11 @@ void *session_object::run(){
 			}
 
 			//printf("Auth Code for [%s = %d]\n",phone.c_str(), global_auth_codes.at(phone));
-			std::map<std::string, int>::iterator it;
 
-			it = global_auth_codes.find(phone);
-			if(it == global_auth_codes.end())
+			auto found_match = std::find(global_auth_index.begin(), global_auth_index.end(), auth);
+			int found_index = std::distance(global_auth_index.begin(), found_match);
+
+			if(found_match == global_auth_index.end())
 			{
 				//key is not found
 				printf("Input Code: [%s] does not exist in man\n",auth_str.c_str());
@@ -225,12 +226,14 @@ void *session_object::run(){
 			else
 			{
 				//key is found
-				int phone_number = it->second;
-				printf("Found Auth Code = %d\n",phone_number);
-				if(phone_number != auth)
-				{
-					//key is found but doesn't match user input
+				struct auth_data found_data = global_auth[found_index];
 
+				std::cout << "Found Data:\nCode:" << found_data.auth_code << "\nPhone:"
+				<<found_data.phone_nubmer << std::endl;
+
+				if(phone != found_data.phone_number)
+				{
+					//auth code is found but the phone number is not correct...
 					printf("Input Code: [%s] does not exist in man\n",auth_str.c_str());
 					std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
 					memset(buffer, 0x0, global_expected_MTU);
@@ -238,18 +241,19 @@ void *session_object::run(){
 					write(c_sock, buffer, global_expected_MTU);
 
 					printf("Erase code associated with phone number :%s\n", phone.c_str());	
-					global_auth_codes.erase(it);
-
+					global_auth.erase(global_auth.begin() + found_index);
+					global_auth_index.ereae(global_auth_index.begin() + found_index);
 					return NULL;
 
 				}
 				else
 				{
 					//key is found and does match user input
-					std::map<std::string, clock_t>::iterator it2 = global_auth_timeouts.find(phone);
 
 					clock_t now = clock();
-					if( (float( now - it2->second) / CLOCKS_PER_SEC) > 1800)
+
+					double time_diff = (double)(now - found_data.time) / CLOCKS_PER_SECOND;
+					if(time_diff > 1800) 
 					{
 
 						//key is found and does match user input, but code has expired(+30mins) 
@@ -260,7 +264,8 @@ void *session_object::run(){
 						write(c_sock, buffer, global_expected_MTU);
 
 						printf("Erase code associated with phone number :%s\n", phone.c_str());	
-						global_auth_codes.erase(it);
+						global_auth.erase(global_auth.begin() + found_index);
+						global_auth_index.ereae(global_auth_index.begin() + found_index);	
 
 						return NULL;
 					}
@@ -278,8 +283,8 @@ void *session_object::run(){
 					sprintf(buffer, "%s", redirect.c_str());
 					write(c_sock, buffer, global_expected_MTU);
 					printf("Erase codes associated with phone number :%s\n", phone.c_str());
-					global_auth_codes.erase(it);
-
+					global_auth.erase(global_auth.begin() + found_index);
+					global_auth_index.ereae(global_auth_index.begin() + found_index);	
 				}
 			}
 
