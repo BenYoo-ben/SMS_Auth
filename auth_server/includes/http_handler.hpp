@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <iconv.h>
 
+#define HTTP_BUFFER_SIZE 20000
+
 #define HTTP_DATA_TYPE_TABLE	0
 #define HTTP_DATA_TYPE_PHONE	1
 #define HTTP_DATA_TYPE_AUTH	2

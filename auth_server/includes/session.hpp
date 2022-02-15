@@ -6,6 +6,7 @@
 #include "common.hpp"
 #include "http_handler.hpp"
 
+#define STYLE_AND_AGREEMENT_BUFFER 50000
 class session_object{
 private:
 	std::string ID;

@@ -2,6 +2,12 @@
 #include "global.hpp"
 #include "random_generator.hpp"
 
+extern std::vector<int> global_phone_sockets;
+extern int global_phone_index;
+
+extern std::vector<int> global_auth_index;
+extern std::vector<struct auth_data> global_auth;
+
 template<class C, void* (C::* thread_run)()>
 void* pthread_member_wrapper(void* data) {
 	C* obj = static_cast<C*>(data);
@@ -78,7 +84,7 @@ int session_object::exchange_auth_with_phone(std::string phone_number, int rando
 
 		memset(buffer,0x0,18);
 		sprintf(buffer,"%s",phone_number.c_str());
-		sprintf(buffer+phone_number.length()-1,"%d",random_data);
+		sprintf(buffer+phone_number.length(),"%d",random_data);
 
 		printf("Send... <%s>\n",buffer);
 
@@ -154,6 +160,7 @@ void *session_object::run(){
 			{
 				while(ret == -2)
 				{
+					printf("Retrying for phone...\n");
 					ret = exchange_auth_with_phone(phone_number, sms_auth_code);
 				}
 
@@ -181,6 +188,8 @@ void *session_object::run(){
 			data.auth_code = sms_auth_code;
 			data.time = clock();
 			data.phone_number = phone_number;
+
+			printf("NEW DATA: [%d] %d [%s] \n",data.auth_code, data.time, data.phone_number.c_str());
 
 			global_auth.push_back(data);
 			global_auth_index.push_back(data.auth_code);
@@ -215,7 +224,7 @@ void *session_object::run(){
 			if(found_match == global_auth_index.end())
 			{
 				//key is not found
-				printf("Input Code: [%s] does not exist in man\n",auth_str.c_str());
+				printf("Input Code: [%s] does not exist in auth table\n",auth_str.c_str());
 				std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
 				memset(buffer, 0x0, global_expected_MTU);
 				sprintf(buffer, "%s", no_auth.c_str());
@@ -228,21 +237,24 @@ void *session_object::run(){
 				//key is found
 				struct auth_data found_data = global_auth[found_index];
 
+				printf("Found INDEX : %d\n",found_index);
+
 				std::cout << "Found Data:\nCode:" << found_data.auth_code << "\nPhone:"
-				<<found_data.phone_nubmer << std::endl;
+				<<found_data.phone_number << std::endl;
 
 				if(phone != found_data.phone_number)
 				{
 					//auth code is found but the phone number is not correct...
-					printf("Input Code: [%s] does not exist in man\n",auth_str.c_str());
+					printf("Input Code: [%s] should go with [%s], input=[%s]\n",auth_str.c_str(), 
+							found_data.phone_number.c_str(), phone.c_str());
 					std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
 					memset(buffer, 0x0, global_expected_MTU);
 					sprintf(buffer, "%s", no_auth.c_str());
 					write(c_sock, buffer, global_expected_MTU);
 
-					printf("Erase code associated with phone number :%s\n", phone.c_str());	
-					global_auth.erase(global_auth.begin() + found_index);
-					global_auth_index.ereae(global_auth_index.begin() + found_index);
+					printf("Erase code associated with phone number :%s\n", phone.c_str());
+					//global_auth.erase(global_auth.begin() + found_index);
+					//global_auth_index.erase(global_auth_index.begin() + found_index);
 					return NULL;
 
 				}
@@ -252,7 +264,7 @@ void *session_object::run(){
 
 					clock_t now = clock();
 
-					double time_diff = (double)(now - found_data.time) / CLOCKS_PER_SECOND;
+					double time_diff = (double)(now - found_data.time) / CLOCKS_PER_SEC;
 					if(time_diff > 1800) 
 					{
 
@@ -264,8 +276,8 @@ void *session_object::run(){
 						write(c_sock, buffer, global_expected_MTU);
 
 						printf("Erase code associated with phone number :%s\n", phone.c_str());	
-						global_auth.erase(global_auth.begin() + found_index);
-						global_auth_index.ereae(global_auth_index.begin() + found_index);	
+						//global_auth.erase(global_auth.begin() + found_index);
+						//global_auth_index.erase(global_auth_index.begin() + found_index);	
 
 						return NULL;
 					}
@@ -284,7 +296,7 @@ void *session_object::run(){
 					write(c_sock, buffer, global_expected_MTU);
 					printf("Erase codes associated with phone number :%s\n", phone.c_str());
 					global_auth.erase(global_auth.begin() + found_index);
-					global_auth_index.ereae(global_auth_index.begin() + found_index);	
+					global_auth_index.erase(global_auth_index.begin() + found_index);	
 				}
 			}
 
@@ -293,20 +305,24 @@ void *session_object::run(){
 		else if(data_type == HTTP_DATA_TYPE_STYLE_SHEET){
 			printf("Style Sheet Request\n");
 			std::string style = hh.get_html(std::string("assets/css/style.css"));
-			memset(buffer,0x0,global_expected_MTU);
-			sprintf(buffer, "%s", style.c_str());
-			write(c_sock, buffer, global_expected_MTU);
+			char saa_buffer[STYLE_AND_AGREEMENT_BUFFER];
+
+			printf("NEED SIZE : %d\n",style.length());
+			memset(saa_buffer,0x0,STYLE_AND_AGREEMENT_BUFFER);
+			sprintf(saa_buffer, "%s", style.c_str());
+			write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER);
 
 			printf("Style Sent \n");
 		}
 		else if(data_type == HTTP_DATA_TYPE_AGREEMENT){
 			printf("Agreement Request\n");
 			std::string agree = hh.get_html(std::string("assets/agreement.html"));
+			
+			char saa_buffer[STYLE_AND_AGREEMENT_BUFFER];
+			memset(saa_buffer,0x0,STYLE_AND_AGREEMENT_BUFFER);
 
-			memset(buffer,0x0,global_expected_MTU);
-
-			sprintf(buffer,"%s",agree.c_str());
-			write(c_sock, buffer, global_expected_MTU);
+			sprintf(saa_buffer,"%s",agree.c_str());
+			write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER);
 
 			printf("Agreement Sent\n");
 		}

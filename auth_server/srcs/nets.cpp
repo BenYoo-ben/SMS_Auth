@@ -4,6 +4,12 @@
 #include "session.hpp"
 #include "random_generator.hpp"
 
+std::vector<int> global_phone_sockets;
+int global_phone_index;
+
+std::vector<int> global_auth_index;
+std::vector<struct auth_data> global_auth;
+
 int server_object::server_socket_init(){
 	
 	s_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -61,6 +67,18 @@ void server_object::server_socket_start(){
 	global_auth_index = std::vector<int>();
 
 	while(true){
+
+		//debug
+		printf("DEBUG ::: \n");
+		for(struct auth_data ad : global_auth){
+			printf("Auth: [%d]\nTime:%d\nPhone:[%s]\n\n",ad.auth_code, ad.time, ad.phone_number.c_str());
+		}
+		printf("\n\n");
+		
+		for(int i : global_auth_index){
+			printf("INDEX : %d\n", i);
+		}
+		
 
 		struct sockaddr_in client_addr;
 

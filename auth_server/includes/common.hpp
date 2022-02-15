@@ -9,4 +9,5 @@
 #include <iostream>
 #include <cstring>
 #include <ctime>
+#include <algorithm>
 #endif

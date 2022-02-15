@@ -82,7 +82,7 @@ std::string http_handler::get_data(char *data, int type){
 		unsigned int start_pos = tmp_str.find("phone_number=");
 		if(start_pos!=std::string::npos)
 		{
-			std::string sub_string = tmp_str.substr(start_pos+13,  12);
+			std::string sub_string = tmp_str.substr(start_pos+13, 11);
 
 			return sub_string;	
 		}
