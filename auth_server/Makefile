@@ -17,12 +17,11 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o , $(SRC_FILES))
 
 TARGET := auth
 
-all : $(TARGET)
-
 $(TARGET) : $(OBJ_FILES)
-		$(CC) -o $@ $^ -I $(INC_DIR) $(LDFLAGS) $(STATICLDFLAGS)
+	$(CC) -o $@ $^ -I $(INC_DIR) $(LDFLAGS) $(STATICLDFLAGS)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
+	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -I $(INC_DIR) -c -o $@ $<
 
 clean:
