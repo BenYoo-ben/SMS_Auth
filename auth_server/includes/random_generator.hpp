@@ -1,5 +1,5 @@
-#ifndef DEFINED_RANDOM_GENERATOR
-#define DEFINED_RANDOM_GENERATOR
+#ifndef AUTH_SERVER_INCLUDES_RANDOM_GENERATOR_HPP_
+#define AUTH_SERVER_INCLUDES_RANDOM_GENERATOR_HPP_ 
 #include <random>
 #include <chrono>
 #include <cmath>
@@ -7,11 +7,8 @@
 
 class random_number_generator{
 private:
-
 public:
-	int generate_int(int digits);
-
+    int generate_int(int digits);
 };
 
-
-#endif
+#endif  // AUTH_SERVER_INCLUDES_RANDOM_GENERATOR_HPP_

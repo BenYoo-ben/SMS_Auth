@@ -1,13 +1,13 @@
-#ifndef COMMON_DEFINED
-#define COMMON_DEFINED
+#ifndef AUTH_SERVER_INCLUDES_COMMON_HPP_
+#define AUTH_SERVER_INCLUDES_COMMON_HPP_
+#include <time.h>
+#include <stdint.h>
 
 #include <vector>
 #include <string>
-#include <json/json.h>
-#include <time.h>
-#include <stdint.h>
 #include <iostream>
 #include <cstring>
 #include <ctime>
 #include <algorithm>
-#endif
+
+#endif  // AUTH_SERVER_INCLUDES_COMMON_HPP_
