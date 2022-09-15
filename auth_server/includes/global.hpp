@@ -1,14 +1,16 @@
-#ifndef DEFINED_GLOBAL
-#define DEFINED_GLOBAL
+#ifndef AUTH_SERVER_INCLUDES_GLOBAL_HPP_
+#define AUTH_SERVER_INCLUDES_GLOBAL_HPP_
+#include <stdint.h>
+#include <string>
 
 struct auth_data{
-	int auth_code;
-	clock_t time;
-	std::string phone_number;
+    int auth_code;
+    clock_t time;
+    std::string phone_number;
 };
 
-static unsigned short global_server_port = 55551;
-static unsigned int global_server_listen_maximum = 10000;
-static unsigned int global_expected_MTU = 8192;
+constexpr uint16_t global_server_port = 55551;
+constexpr uint32_t global_server_listen_maximum = 10000;
+constexpr uint32_t global_expected_MTU = 8192;
 
-#endif
+#endif  // AUTH_SERVER_INCLUDES_GLOBAL_HPP_
