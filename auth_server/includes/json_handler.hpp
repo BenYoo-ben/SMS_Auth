@@ -1,4 +1,0 @@
-#ifndef DEFINED_JSON_HANDLER
-#define DEFINED_JSON_HANDLER
-
-#endif
