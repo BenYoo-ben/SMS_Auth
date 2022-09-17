@@ -1,4 +1,4 @@
-#### Authenticate User by Phone Using Your Phone
+### Authenticate User by SMS Using Your Phone
 
 ---------------------
 ```mermaid
@@ -16,5 +16,7 @@ sequenceDiagram
     Web->>Server: input received digits in web
     
     Server->>Web: authenticate and redirect user
-```  
+``` 
+--------------------
+#### Example Images
 ![image](https://user-images.githubusercontent.com/57353430/190856149-3eebe9d1-57c3-489a-bec3-907d9ef7887e.png)
