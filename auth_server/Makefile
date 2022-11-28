@@ -1,12 +1,8 @@
-# Makefile for Fileserver prober client
-
-
 CC := g++
 
-CFLAGS := -Wall -O3 -std=c++14
+CFLAGS := -Wall -O3 -std=c++14 -pedantic-errors
 LDFLAGS := -lpthread -ljsoncpp
 STATICLDFLAGS := -L./ext_libs
-
 
 INC_DIR := ./includes/
 OBJ_DIR := ./objs
