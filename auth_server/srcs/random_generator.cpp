@@ -11,4 +11,4 @@ int random_number_generator::generate_int(int digits){
     std::uniform_int_distribution<int> dis(min, max);
 
     return dis(gen);
-};
+}

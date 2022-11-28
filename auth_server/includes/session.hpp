@@ -8,16 +8,18 @@
 
 #include "common.hpp"
 #include "http_handler.hpp"
+#include "global.hpp"
 
 #define STYLE_AND_AGREEMENT_BUFFER 50000
 class session_object{
- private:
+private:
     std::string ID;
-    // client socket
     int c_sock;
 
     pthread_t session_thread;
- public:
+
+    global_object *g_obj = global_object::getInstance();
+public:
     explicit session_object(int established_socket);
 
     void close_socket();

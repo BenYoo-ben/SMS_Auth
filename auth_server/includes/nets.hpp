@@ -3,12 +3,13 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "common.hpp"
+#include "global.hpp"
 
 class server_object{
- private:
-    // server socket;
+private:
     int s_sock;
- public:
+public:
     int server_socket_init();
     int server_socket_bind();
     int server_socket_listen();

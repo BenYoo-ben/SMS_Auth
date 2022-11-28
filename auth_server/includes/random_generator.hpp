@@ -6,7 +6,6 @@
 #include "common.hpp"
 
 class random_number_generator{
-private:
 public:
     int generate_int(int digits);
 };

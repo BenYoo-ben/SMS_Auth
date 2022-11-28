@@ -2,9 +2,11 @@
 #include "nets.hpp"
 #include "random_generator.hpp"
 #include "http_handler.hpp"
+#include "global.hpp"
 
+// init global obj
+global_object* global_object::instance = nullptr;
 int main(int argc, char *argv[]) {
-    // Prepare Server;
     server_object so;
 
     if (so.server_socket_init() < 0) {

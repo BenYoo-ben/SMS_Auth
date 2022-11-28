@@ -2,12 +2,6 @@
 #include "global.hpp"
 #include "random_generator.hpp"
 
-extern std::vector<int> global_phone_sockets;
-extern int global_phone_index;
-
-extern std::vector<int> global_auth_index;
-extern std::vector<struct auth_data> global_auth;
-
 template<class C, void* (C::* thread_run)()>
 void* pthread_member_wrapper(void* data) {
     C* obj = static_cast<C*>(data);
@@ -16,85 +10,81 @@ void* pthread_member_wrapper(void* data) {
 
 session_object::session_object(int established_socket) {
     c_sock = established_socket;
-    pthread_create(&session_thread, NULL, pthread_member_wrapper<session_object, &session_object::run>, this);
+    pthread_create(&session_thread, nullptr, pthread_member_wrapper<session_object, &session_object::run>, this);
 }
-/*
- * 0x05 = check if phone is alive(no response = dead)     
- * meaning Enquiry
- */
+
+// 0x05 = check if phone is alive(no response = dead)
+// meaning Enquiry
 int session_object::exchange_auth_with_phone(std::string phone_number, int random_data) {
-    if (global_phone_sockets.empty()) {
-        printf("No Phone Socket is available! \n");
+    if (g_obj->global_phone_sockets.empty()) {
+        std::cerr << "No Phone Socket is available!" << std::endl;
         return -1;
     } else {
-        if (global_phone_index > global_phone_sockets.size()) {
-            global_phone_index = 0;
+        if (g_obj->global_phone_index > g_obj->global_phone_sockets.size()) {
+            g_obj->global_phone_index = 0;
         }
 
-        int use_socket = global_phone_sockets.at(global_phone_index);
+        int use_socket = g_obj->global_phone_sockets.at(g_obj->global_phone_index);
 
         char buffer[18];
 
         // 0x05 = enquiry, checking if phone is alive
         buffer[0] = 0x05;
 
-        int _size = write(use_socket, buffer, 1);
-
-        if (_size != 1) {
-            global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
-            global_phone_index = 0;
-            printf("Write ERR !\n");
+        int check_size = write(use_socket, buffer, 1);
+        if (check_size != 1) {
+            g_obj->global_phone_sockets.erase(g_obj->global_phone_sockets.begin() + g_obj->global_phone_index);
+            g_obj->global_phone_index = 0;
+            std::cerr << "Write Enquiry(0x05) code failed" << std::endl;
             return -2;
         }
 
         // 0x06 = acknowledgement(ascii)
-        _size = read(use_socket, buffer, 1);
+        check_size = read(use_socket, buffer, 1);
 
-        if (_size != 1 || buffer[0] != 0x06) {
-            global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
-            global_phone_index = 0;
-            printf("Read ERR ! \n");
+        if (check_size != 1 || buffer[0] != 0x06) {
+            g_obj->global_phone_sockets.erase(g_obj->global_phone_sockets.begin() + g_obj->global_phone_index);
+            g_obj->global_phone_index = 0;
+            std::cerr << "Read ACK(0x06) code for Enquiry failed" << std::endl;
             return -2;
         }
 
         // 0x01 = start of header(ascii)
         buffer[0] = 0x01;
-        _size = write(use_socket, buffer, 1);
+        check_size = write(use_socket, buffer, 1);
 
-        if (_size != 1) {
-            global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
-            global_phone_index = 0;
-            printf("Write ERR !\n");
+        if (check_size != 1) {
+            g_obj->global_phone_sockets.erase(g_obj->global_phone_sockets.begin() + g_obj->global_phone_index);
+            g_obj->global_phone_index = 0;
+            std::cerr << "Write Header code(0x01) failed" << std::endl;
             return -2;
         }
 
-        _size = read(use_socket, buffer, 1);
+        check_size = read(use_socket, buffer, 1);
 
         // 0x06 = acknowledgement(ascii)
-        if (_size != 1 || buffer[0] != 0x06) {
-            global_phone_sockets.erase(global_phone_sockets.begin() + global_phone_index);
-            global_phone_index = 0;
-            printf("Read ERR !\n");
+        if (check_size != 1 || buffer[0] != 0x06) {
+            g_obj->global_phone_sockets.erase(g_obj->global_phone_sockets.begin() + g_obj->global_phone_index);
+            g_obj->global_phone_index = 0;
+            std::cerr << "Read ACK(0x06) code for Header code failed" << std::endl;
             return -2;
         }
 
-        memset(buffer, 0x0, 18);
+        memset(buffer, 0x00, 18);
         snprintf(buffer, sizeof(buffer), "%s", phone_number.c_str());
         snprintf(buffer + phone_number.length(), sizeof(buffer) - phone_number.length(), "%d", random_data);
 
-        printf("Send... <%s>\n", buffer);
+        check_size = write(use_socket, buffer, 18);
 
-        _size = write(use_socket, buffer, 18);
-
-        if (_size != 18) {
-            printf("Write 2 ERR !\n");
+        if (check_size != 18) {
+            std::cerr << "Write [KR]Phone Number + Secrect Code failed" << std::endl;
             return -1;
         }
 
-        _size = read(use_socket, buffer, 1);
+        check_size = read(use_socket, buffer, 1);
 
-        if (_size != 1 || buffer[0] != 0x06) {
-            printf("Read 2 ERR !\n");
+        if (check_size != 1 || buffer[0] != 0x06) {
+            std::cerr << "Read ACK(0x06) code for Secret Code failed" << std::endl;
             return -1;
         }
 
@@ -110,195 +100,172 @@ void *session_object::run() {
     // read HTTP request
     bytes_read = read(c_sock, buffer, global_expected_MTU);
 
-
     if (bytes_read < 1) {
-        std::cerr << "Invalid Read" << std::endl;
+        std::cerr << "Read HTTP Request failed" << std::endl;
         close_socket();
     } else {
-        printf("Read complete ! : RECV=%s\n", buffer);
-
         int data_type = hh.check_type(buffer);
 
         if (hh.check_if_phone(buffer)) {
-            printf("New Phone asking for registration\nsending ack...\n");
             memset(buffer, 0x00, global_expected_MTU);;
             buffer[0] = 0x06;
-            if (write(c_sock, buffer, 1) > 0) {
-                printf("ack sent... !\n");
+            if (write(c_sock, buffer, 1) < 0) {
+                std::cerr << "Write ACK(0x06) code for HTTP Request failed" << std::endl;
+                return nullptr;
             }
-
-            global_phone_sockets.push_back(c_sock);
+            g_obj->global_phone_sockets.push_back(c_sock);
         } else if (data_type == HTTP_DATA_TYPE_TABLE) {
-            printf("TYPE TABLE \n");
             memset(buffer, 0x0, global_expected_MTU);
             snprintf(buffer, sizeof(buffer), "%s", hh.get_html(std::string("assets/auth_main.html")).c_str());
-            write(c_sock, buffer, global_expected_MTU);
-
+            if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                std::cerr << "Write html main page failed" << std::endl;
+                return nullptr;
+            }
         } else if (data_type == HTTP_DATA_TYPE_PHONE) {
-            printf("TYPE PHONE\n");
-
             std::string phone_number = hh.get_data(buffer, HTTP_DATA_TYPE_PHONE);
             if (phone_number.empty()) {
-                perror("phone number is invalid(possibly empty)");
-                return NULL;
+                std::cerr << "phone number is invalid(possibly empty)" << std::endl;
+                return nullptr;
             }
-            // sms twice = mutex(add to map, delete add again)
+
             random_number_generator rng;
             int sms_auth_code = rng.generate_int(6);
 
-            int ret;
+            int ret = 0;
             if ((ret = exchange_auth_with_phone(phone_number, sms_auth_code)) < 0) {
                 while (ret == -2) {
-                    printf("Retrying for phone...\n");
+                    std::cerr << "Retrying to authenticate..." << std::endl;
                     ret = exchange_auth_with_phone(phone_number, sms_auth_code);
                 }
 
                 if (ret == -1) {
-                    printf("There are no available SMS Devices...\n");
                     std::string no_sms_dev_data = hh.get_html(std::string("assets/auth_fail.html"));
                     memset(buffer , 0x0, global_expected_MTU);
                     snprintf(buffer, sizeof(buffer), "%s", no_sms_dev_data.c_str());
-                    write(c_sock, buffer, global_expected_MTU);
-                    return NULL;
-                }    
+                    if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                        std::cerr << "Write html fail page failed" << std::endl;
+                    }
+                    return nullptr;
+                }
             }
 
             // replace SHARPS('#') with phone number
             memset(buffer, 0x0, global_expected_MTU);
             std::string phase_2_data = hh.get_html(std::string("assets/auth_phase_2.html"));
             snprintf(buffer, sizeof(buffer), "%s", phase_2_data.c_str());
-            write(c_sock, buffer, global_expected_MTU);
+            if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                std::cerr << "Write html 2nd auth phage failed" << std::endl;
+                return nullptr;
+            }
 
-            // insert into Vector
             struct auth_data data;
             data.auth_code = sms_auth_code;
             data.time = clock();
             data.phone_number = phone_number;
 
-            printf("NEW DATA: [%d] %d [%s] \n", data.auth_code, data.time, data.phone_number.c_str());
-
-            global_auth.push_back(data);
-            global_auth_index.push_back(data.auth_code);
+            g_obj->global_auth.push_back(data);
+            g_obj->global_auth_index.push_back(data.auth_code);
         } else if (data_type == HTTP_DATA_TYPE_AUTH) {
             std::string auth_str = hh.get_data(buffer, HTTP_DATA_TYPE_AUTH);
             if (auth_str.empty()) {
-                perror("auth code is invalid(possibly empty)");
-                return NULL;
+                std::cerr << "auth code is invalid(possibly empty)" << std::endl;
+                return nullptr;
             }
+
             int auth = stoi(auth_str);
-            printf("AUTH = %s\n", auth_str.c_str());
 
             std::string table = hh.get_data(buffer, HTTP_DATA_TYPE_TABLE);
             std::string phone = hh.get_data(buffer, HTTP_DATA_TYPE_PHONE);
 
             if (table.empty()) {
-                perror("table is invalid(possibly empty)");
-                return NULL;
+                std::cerr << "table is invalid(possibly empty)" << std::endl;
+                return nullptr;
             }
             if (phone.empty()) {
-                perror("phone is invalid(possibly empty)");
-                return NULL;
+                std::cerr << "phone is invalid(possibly empty)" << std::endl;
+                return nullptr;
             }
 
-            // printf("Auth Code for [%s = %d]\n",phone.c_str(), global_auth_codes.at(phone));
+            auto found_match = std::find(g_obj->global_auth_index.begin(), g_obj->global_auth_index.end(), auth);
+            int found_index = std::distance(g_obj->global_auth_index.begin(), found_match);
 
-            auto found_match = std::find(global_auth_index.begin(), global_auth_index.end(), auth);
-            int found_index = std::distance(global_auth_index.begin(), found_match);
-
-            if (found_match == global_auth_index.end()) {
+            if (found_match == g_obj->global_auth_index.end()) {
                 // key is not found
-                printf("Input Code: [%s] does not exist in auth table\n", auth_str.c_str());
                 std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
                 memset(buffer, 0x0, global_expected_MTU);
                 snprintf(buffer, sizeof(buffer), "%s", no_auth.c_str());
-                write(c_sock, buffer, global_expected_MTU);
-                return NULL;
-
+                if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                    std::cerr << "Write html auth fail page failed" << std::endl;
+                }
+                return nullptr;
             } else {
                 // key is found
-                struct auth_data found_data = global_auth[found_index];
-
-                printf("Found INDEX : %d\n", found_index);
-
-                std::cout << "Found Data:\nCode:" << found_data.auth_code << "\nPhone:"
-                    <<found_data.phone_number << std::endl;
+                struct auth_data found_data = g_obj->global_auth[found_index];
 
                 if (phone != found_data.phone_number) {
                     // auth code is found but the phone number is not correct...
-                    printf("Input Code: [%s] should go with [%s], input=[%s]\n", auth_str.c_str(),
-                            found_data.phone_number.c_str(), phone.c_str());
                     std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
                     memset(buffer, 0x0, global_expected_MTU);
                     snprintf(buffer, sizeof(buffer), "%s", no_auth.c_str());
-                    write(c_sock, buffer, global_expected_MTU);
+                    if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                        std::cerr << "Write html auth fail page failed" << std::endl;
+                    }
 
-                    printf("Erase code associated with phone number :%s\n", phone.c_str());
-                    // global_auth.erase(global_auth.begin() + found_index);
-                    // global_auth_index.erase(global_auth_index.begin() + found_index);
-                    return NULL;
+                    return nullptr;
                 } else {
                     // key is found and does match user input
-
                     clock_t now = clock();
-                    double time_diff = (double)(now - found_data.time) / CLOCKS_PER_SEC;
+                    double time_diff = static_cast<double>((now - found_data.time)) / CLOCKS_PER_SEC;
                     if (time_diff > 1800) {
                         // key is found and does match user input, but code has expired(+30mins)
-                        printf("Input Code: [%s] has expired\n", auth_str.c_str());
                         std::string no_auth = hh.get_html(std::string("assets/auth_fail.html"));
                         memset(buffer, 0x0, global_expected_MTU);
                         snprintf(buffer, sizeof(buffer), "%s", no_auth.c_str());
-                        write(c_sock, buffer, global_expected_MTU);
+                        if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                            std::cerr << "Write html auth fail page failed" << std::endl;
+                            return nullptr;
+                        }
 
-                        printf("Erase code associated with phone number :%s\n", phone.c_str());
-                        // global_auth.erase(global_auth.begin() + found_index);
-                        // global_auth_index.erase(global_auth_index.begin() + found_index);
-
-                        return NULL;
+                        return nullptr;
                     }
-                    // TO-DO: make fail attempts into function(redundant, repetitive codes)
 
-                    // holy, you finally got here :) you are all good to go
                     std::string redirect = hh.get_html(std::string("assets/redirect.html"));
-
-                    printf("TABLE = %s\nPHONE = %s\n\n", table.c_str(), phone.c_str());
 
                     redirect.replace(redirect.find("!!!"), 3, table);
                     redirect.replace(redirect.find("@@@"), 3, phone);
                     memset(buffer, 0x0, global_expected_MTU);
                     snprintf(buffer, sizeof(buffer), "%s", redirect.c_str());
-                    write(c_sock, buffer, global_expected_MTU);
-                    printf("Erase codes associated with phone number :%s\n", phone.c_str());
-                    global_auth.erase(global_auth.begin() + found_index);
-                    global_auth_index.erase(global_auth_index.begin() + found_index);
+                    if (write(c_sock, buffer, global_expected_MTU) < 0) {
+                        std::cerr << "Write html redirect page failed" << std::endl;
+                        return nullptr;
+                    }
+                    g_obj->global_auth.erase(g_obj->global_auth.begin() + found_index);
+                    g_obj->global_auth_index.erase(g_obj->global_auth_index.begin() + found_index);
                 }
             }
 
         } else if (data_type == HTTP_DATA_TYPE_STYLE_SHEET) {
-            printf("Style Sheet Request\n");
             std::string style = hh.get_html(std::string("assets/css/style.css"));
             char saa_buffer[STYLE_AND_AGREEMENT_BUFFER];
 
-            printf("NEED SIZE : %d\n", style.length());
             memset(saa_buffer, 0x0, STYLE_AND_AGREEMENT_BUFFER);
             snprintf(saa_buffer, sizeof(buffer), "%s", style.c_str());
-            write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER);
-
-            printf("Style Sent \n");
+            if (write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER) < 0) {
+                std::cerr << "Write css style failed" << std::endl;
+            }
         } else if (data_type == HTTP_DATA_TYPE_AGREEMENT) {
-            printf("Agreement Request\n");
             std::string agree = hh.get_html(std::string("assets/agreement.html"));
 
             char saa_buffer[STYLE_AND_AGREEMENT_BUFFER];
             memset(saa_buffer, 0x0, STYLE_AND_AGREEMENT_BUFFER);
 
             snprintf(saa_buffer, sizeof(buffer), "%s", agree.c_str());
-            write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER);
-
-            printf("Agreement Sent\n");
+            if (write(c_sock, saa_buffer, STYLE_AND_AGREEMENT_BUFFER) < 0) {
+                std::cerr << "Write html agreement page failed" << std::endl;
+            }
         }
     }
-    printf("END OF SESSION\n");
-    return NULL;
+    return nullptr;
 }
 
 void session_object::close_socket() {
